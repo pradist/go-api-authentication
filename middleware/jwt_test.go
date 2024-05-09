@@ -63,13 +63,7 @@ func TestVerifyTokenShouldBeParsedPass(t *testing.T) {
 	}
 }
 
-func TestVerifyTokenShouldBeParsedFail(t *testing.T) {
-	// t.Setenv("SECRET_KEY", "valid")
-	// userName := "Test"
-	// _, _ := middleware.CreateToken(userName)
-
-	// Change the secret key to make the token invalid
-	// t.Setenv("SECRET_KEY", "invalid")
+func TestVerifyToken_WhenTokenIsEmpty_ShouldVerifyFail(t *testing.T) {
 	_, err := middleware.VerifyToken("")
 	fmt.Println(err.Error())
 	if err == nil {
