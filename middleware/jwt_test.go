@@ -70,3 +70,11 @@ func TestVerifyToken_WhenTokenIsEmpty_ShouldVerifyFail(t *testing.T) {
 		t.Errorf("Expected error: got %v, want %v", nil, errors.New("invalid token"))
 	}
 }
+
+func TestVerifyToken_WhenTokenIsInvalid_ShouldVerifyFail(t *testing.T) {
+	_, err := middleware.VerifyToken("invalid_token")
+	fmt.Println(err.Error())
+	if err == nil {
+		t.Errorf("Expected error: got %v, want %v", nil, errors.New("invalid token"))
+	}
+}
