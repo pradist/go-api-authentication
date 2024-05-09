@@ -1,16 +1,17 @@
 package middleware_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/pradist/go-api-authentication/middleware"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 func TestGenerateToken(t *testing.T) {
+	testSecretKey := []byte(os.Getenv("SECRET_KEY"))
 
 	testCases := []struct {
 		name     string
@@ -36,7 +37,7 @@ func TestGenerateToken(t *testing.T) {
 			if err == nil {
 				// Parse the token to verify its correctness
 				token, parseErr := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-					return []byte(os.Getenv("SECRET_KEY")), nil
+					return testSecretKey, nil
 				})
 
 				if parseErr != nil {
@@ -66,5 +67,42 @@ func TestGenerateToken(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestVerifyTokenWithValidToken(t *testing.T) {
+	validTokenString, _ := middleware.GenerateToken(123)
+	claims, err := middleware.VerifyToken(validTokenString)
+
+	if err == nil && claims == nil {
+		t.Error("Expected non-nil claims, but got nil")
+	}
+}
+
+func TestVerifyTokenWithInvalidMethodToken(t *testing.T) {
+	testSecretKey := []byte("test_secret_key")
+	invalidMethodToken := jwt.New(jwt.SigningMethodHS256)
+	invalidMethodTokenString, _ := invalidMethodToken.SignedString(testSecretKey)
+
+	expectedError := fmt.Errorf("signature is invalid")
+
+	_, err := middleware.VerifyToken(invalidMethodTokenString)
+
+	if err == nil || err.Error() != expectedError.Error() {
+		t.Errorf("Unexpected error: got %v, want %v", err, expectedError)
+	}
+}
+
+func TestVerifyTokenWithInvalidClaimsToken(t *testing.T) {
+	testSecretKey := []byte("test_secret_key")
+	invalidClaimsToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{"foo": "bar"})
+	invalidClaimsTokenString, _ := invalidClaimsToken.SignedString(testSecretKey)
+
+	expectedError := "token contains an invalid number of segments"
+
+	_, err := middleware.VerifyToken(invalidClaimsTokenString)
+
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("Unexpected error: got %v, want %v", err, expectedError)
 	}
 }
