@@ -1,6 +1,8 @@
 package middleware_test
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -10,8 +12,8 @@ import (
 )
 
 func TestCreateTokenShouldBeParsedPass(t *testing.T) {
-	userName := "Test"
 	testSecretKey := []byte(os.Getenv("SECRET_KEY"))
+	userName := "Test"
 	tokenString, err := middleware.CreateToken(userName)
 
 	if err != nil {
@@ -34,7 +36,7 @@ func TestCreateTokenShouldBeParsedPass(t *testing.T) {
 		}
 
 		userNameClaim, ok := claims["user_name"].(string)
-		if !ok || string(userNameClaim) != userName {
+		if !ok || userName != userNameClaim {
 			t.Errorf("Invalid user ID claim in token: got %v, want %v", userNameClaim, userName)
 		}
 
@@ -48,5 +50,29 @@ func TestCreateTokenShouldBeParsedPass(t *testing.T) {
 		if expTime.Before(expectedExpTime.Add(-time.Second)) || expTime.After(expectedExpTime.Add(time.Second)) {
 			t.Errorf("Invalid expiration claim in token: got %v, want expiration time 1 hour from now", expTime)
 		}
+	}
+}
+
+func TestVerifyTokenShouldBeParsedPass(t *testing.T) {
+	userName := "Test"
+	tokenString, _ := middleware.CreateToken(userName)
+
+	_, err := middleware.VerifyToken(tokenString)
+	if err != nil {
+		t.Errorf("Unexpected error: got %v, want %v", err, nil)
+	}
+}
+
+func TestVerifyTokenShouldBeParsedFail(t *testing.T) {
+	// t.Setenv("SECRET_KEY", "valid")
+	// userName := "Test"
+	// _, _ := middleware.CreateToken(userName)
+
+	// Change the secret key to make the token invalid
+	// t.Setenv("SECRET_KEY", "invalid")
+	_, err := middleware.VerifyToken("")
+	fmt.Println(err.Error())
+	if err == nil {
+		t.Errorf("Expected error: got %v, want %v", nil, errors.New("invalid token"))
 	}
 }
