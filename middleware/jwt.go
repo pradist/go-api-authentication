@@ -18,14 +18,14 @@ func CreateToken(username string) (string, error) {
 	return token.SignedString(secretKey)
 }
 
-type CustomClaimsExample struct {
+type UserClaims struct {
 	UserName string `json:"user_name"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
-func VerifyToken(tokenString string) (*CustomClaimsExample, error) {
+func VerifyToken(tokenString string) (*UserClaims, error) {
 
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaimsExample{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 
@@ -33,6 +33,5 @@ func VerifyToken(tokenString string) (*CustomClaimsExample, error) {
 		return nil, err
 	}
 
-	claims := token.Claims.(*CustomClaimsExample)
-	return claims, nil
+	return token.Claims.(*UserClaims), nil
 }
